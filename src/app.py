@@ -41,7 +41,7 @@ st.markdown(
 
 st.markdown('<p class="titulo">Agente Multimodal</p>', unsafe_allow_html=True)
 
-# Estado de la sesión.
+# # Estado de la sesión.
 if "agente" not in st.session_state:
     st.session_state.agente = AgenteAcademico()
 if "doc" not in st.session_state:
@@ -55,16 +55,16 @@ agente: AgenteAcademico = st.session_state.agente
 
 
 def guardar_temporal(archivo):
-    """Guarda en disco un archivo subido y devuelve su ruta."""
+    """Guarda el archivo subido temporalmente y devuelve la ruta.""""
     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(archivo.name).suffix) as tmp:
         tmp.write(archivo.getbuffer())
         return tmp.name
 
-
+# Etiqueta visual para títulos en la interfaz
 def etiqueta(texto):
     st.markdown(f'<span class="etq">{texto}</span>', unsafe_allow_html=True)
 
-
+# Carga de documentos
 with st.sidebar:
     st.subheader("Documento")
     archivo = st.file_uploader("Sube un PDF, CSV, TXT o imagen",
@@ -96,7 +96,7 @@ if not st.session_state.doc:
 
 tab_res, tab_meta, tab_cmp, tab_chat = st.tabs(
     ["Resumen", "Metadatos", "Comparativa", "Preguntas"])
-
+# Genera y muestra el resumen del documento
 with tab_res:
     if st.button("Generar resumen"):
         with st.spinner("Analizando el documento..."):
@@ -122,7 +122,7 @@ with tab_res:
             etiqueta("Limitaciones")
             for l in r.limitaciones:
                 st.markdown(f"- {l}")
-
+# Extrae información bibliográfica del documento
 with tab_meta:
     if st.button("Extraer metadatos"):
         with st.spinner("Extrayendo metadatos..."):
@@ -138,7 +138,7 @@ with tab_meta:
             etiqueta("Palabras clave"); st.write(", ".join(e.palabras_clave) or "-")
             etiqueta("Datasets"); st.write(", ".join(e.datasets) or "-")
             etiqueta("Métricas"); st.write(", ".join(e.metricas) or "-")
-
+# Comparación entre dos documentos
 with tab_cmp:
     if not archivo_b:
         st.info("Sube un segundo documento en el panel lateral para comparar.")
@@ -154,7 +154,7 @@ with tab_cmp:
         with st.container(border=True):
             etiqueta("Conclusión")
             st.write(comp.conclusion)
-
+# Chat con memoria sobre el documento
 with tab_chat:
     for m in st.session_state.mensajes:
         st.chat_message(m["rol"]).write(m["texto"])

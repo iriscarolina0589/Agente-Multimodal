@@ -1,12 +1,16 @@
 """Prompts del agente.
 
-Hay un prompt distinto para cada funcionalidad (resumen, metadatos, comparacion y
-preguntas), en vez de uno generico. Todos comparten un rol base que fija el idioma
-y pide no inventar informacion que no este en el documento.
+Cada funcionalidad del sistema tiene su propio prompt (resumen, metadatos,
+comparacion y preguntas) para mejorar la precision.
+
+Todos parten de una misma base que define el estilo de respuesta y evita
+que el modelo invente informacion que no esta en el documento.
 """
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
+# Instruccion base que comparten todos los prompts
+# Define el tono, idioma y regla principal: no inventar informacion
 ROL_BASE = (
     "Eres un asistente experto en analizar articulos cientificos. Respondes siempre "
     "en espanol, de forma clara y estructurada. Te basas solo en el contenido del "
@@ -14,14 +18,14 @@ ROL_BASE = (
     "inventarlo."
 )
 
-# Resumen general (parrafo) del articulo.
+# Prompt para generar el resumen general del documento
 PROMPT_RESUMEN = ChatPromptTemplate.from_messages([
     ("system", ROL_BASE + " Escribe un resumen general del articulo en 2 o 3 frases."),
     ("human", 'Documento:\n"""\n{documento}\n"""\n\nEscribe el resumen general.'),
 ])
 
-# Secciones del resumen. Se extraen aparte (sin el campo 'resumen') para que el
-# modelo pequeno rellene cada una en vez de volcarlo todo en el resumen general.
+# Prompt para extraer las secciones del resumen por separado
+# Esto ayuda a que el modelo no mezcle todo en un unico texto
 PROMPT_SECCIONES = ChatPromptTemplate.from_messages([
     ("system", ROL_BASE + " Extrae del documento los objetivos, la metodologia, los "
                "hallazgos clave y las limitaciones. Rellena los CUATRO campos con "
@@ -30,14 +34,14 @@ PROMPT_SECCIONES = ChatPromptTemplate.from_messages([
               "Indica los objetivos, la metodologia, los hallazgos y las limitaciones."),
 ])
 
-# Metadatos bibliograficos.
+# Prompt para obtener metadatos bibliograficos del documento
 PROMPT_ENTIDADES = ChatPromptTemplate.from_messages([
     ("system", ROL_BASE + " Extrae los metadatos del documento: titulo, autores, "
                "ano, publicacion, palabras clave, datasets y metricas."),
     ("human", 'Documento:\n"""\n{documento}\n"""\n\nExtrae los metadatos.'),
 ])
 
-# Ficha de un documento (se usa para construir la comparacion).
+# Prompt para crear una ficha resumida del documento (usada en comparaciones)
 PROMPT_FICHA = ChatPromptTemplate.from_messages([
     ("system", ROL_BASE + " Extrae cuatro datos del documento: el objetivo, el metodo, "
                "los datos o dataset usados y los resultados. Rellena los CUATRO campos "
@@ -46,7 +50,7 @@ PROMPT_FICHA = ChatPromptTemplate.from_messages([
               "Resume en una o dos frases el objetivo, el metodo, los datos y los resultados."),
 ])
 
-# Conclusion de la comparacion a partir de las dos fichas.
+# Prompt para generar la conclusion al comparar dos documentos
 PROMPT_CONCLUSION = ChatPromptTemplate.from_messages([
     ("system", ROL_BASE + " Resume en una o dos frases la diferencia clave entre los "
                "dos trabajos e indica para que es mejor cada uno."),
@@ -56,7 +60,7 @@ PROMPT_CONCLUSION = ChatPromptTemplate.from_messages([
      "Escribe la conclusion comparativa."),
 ])
 
-# Preguntas de seguimiento; incluye el historial para mantener el contexto.
+# # Prompt para preguntas sobre el documento con contexto de conversacion
 PROMPT_QA = ChatPromptTemplate.from_messages([
     ("system", ROL_BASE + " Responde a las preguntas sobre el documento teniendo en "
                "cuenta la conversacion previa, para resolver referencias como "
@@ -66,7 +70,7 @@ PROMPT_QA = ChatPromptTemplate.from_messages([
     ("human", "{pregunta}"),
 ])
 
-# Transcripcion de imagenes con un modelo de vision (ruta opcional).
+# Prompt para vision (imagenes o paginas escaneadas)
 PROMPT_VISION = (
     "Transcribe el texto visible de esta imagen (pagina o figura de un documento "
     "academico). Describe brevemente tablas o graficos si los hay. Responde en "

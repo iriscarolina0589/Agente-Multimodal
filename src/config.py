@@ -1,35 +1,33 @@
-"""Parametros de configuracion del agente.
+"""Configuración del agente.
 
-Se leen de variables de entorno para poder cambiarlos sin tocar el codigo.
+Los valores se pueden cambiar desde variables de entorno sin tocar el código.
 """
 
 import os
 
-# Modelo de texto en Ollama. Llama 3.1 8B cuantizado cabe en una GPU de 8 GB.
+# Modelo principal que usa el agente en Ollama. Por defecto usa llama3.1:8b
 MODELO_TEXTO = os.getenv("AGENTE_MODELO", "llama3.1:8b")
 
-# Modelo de vision opcional para imagenes (por ejemplo "llava:7b").
+# Modelo opcional para imágenes (si se usa análisis visual)
 MODELO_VISION = os.getenv("AGENTE_MODELO_VISION", "")
 
 # Servidor local de Ollama.
 OLLAMA_BASE_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
-# Temperatura baja: respuestas mas estables para resumir y extraer.
+# Controla qué tan creativas son las respuestas (bajo = más estable)
 TEMPERATURA = float(os.getenv("AGENTE_TEMPERATURA", "0.1"))
 
-# Limite de caracteres del documento que se envian al modelo.
+# Límite aproximado del texto que se envía al modelo
 MAX_CHARS_CONTEXTO = int(os.getenv("AGENTE_MAX_CHARS", "12000"))
 
-# Ventana de contexto del modelo (tokens). Debe caber el documento recortado mas
-# la respuesta; 8192 es suficiente para MAX_CHARS_CONTEXTO y cabe en una GPU de 8 GB.
+# Tamaño de ventana de contexto del modelo (tokens)
 NUM_CTX = int(os.getenv("AGENTE_NUM_CTX", "8192"))
 
-# Cuanto mantiene Ollama el modelo cargado tras una peticion. Con 30m no se
-# descarga de la GPU entre una consulta y otra durante una sesion de trabajo.
+# Mantiene el modelo cargado en memoria para evitar recargas constantes
 KEEP_ALIVE = os.getenv("AGENTE_KEEP_ALIVE", "30m")
 
 
 def resumen_config():
-    """Devuelve una linea con la configuracion activa, para mostrarla en la interfaz."""
+    """Devuelve un resumen rápido de la configuración activa."""
     vision = MODELO_VISION or "(desactivado)"
     return f"modelo={MODELO_TEXTO} | vision={vision} | ollama={OLLAMA_BASE_URL}"

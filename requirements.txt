@@ -1,22 +1,21 @@
-# Dependencias del agente multimodal (documentos académicos).
-# Recomendado: Python 3.11 o 3.12 (mejor disponibilidad de "wheels").
+# Dependencias del proyecto de agente multimodal para documentos academicos
+# Se recomienda Python 3.11 o 3.12 para evitar problemas con algunas librerias
 #
-# El modelo de lenguaje NO es una dependencia pip: se ejecuta en local con
-# Ollama (ver README). Aquí solo van las librerías de Python.
+# El modelo de lenguaje se ejecuta en local con Ollama, no se instala por pip
 
-# --- Orquestación LLM (LangChain + Ollama) ---
+# --- LangChain y conexion con Ollama  ---
 langchain>=0.3,<0.4
 langchain-core>=0.3,<0.4
 langchain-ollama>=0.2,<0.4
 
-# --- Validación / salida estructurada ---
+# --- Manejo de salida estructurada ---
 pydantic>=2.7
 
-# --- Ingesta de documentos ---
+# --- Procesamiento de documentos ---
 pymupdf>=1.24        # PDF (import fitz)
 pandas>=2.2          # CSV
 tabulate>=0.9        # para df.to_markdown()
 pillow>=10.3         # imágenes (ruta multimodal opcional)
 
-# --- Interfaz ---
+# --- Interfaz Web ---
 streamlit>=1.36      # demo en vivo

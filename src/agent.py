@@ -15,7 +15,7 @@ import prompts
 
 # Esquemas de salida estructurada.
 class ResumenArticulo(BaseModel):
-    """Lo que quiero que el modelo saque al resumir un articulo."""
+    """Estructura del resumen que devuelve el modelo."""
     resumen: str = Field(description="Resumen general del articulo en 2 o 3 frases.")
     objetivos: list[str] = Field(
         default_factory=list,
@@ -31,7 +31,7 @@ class ResumenArticulo(BaseModel):
 
 
 class SeccionesResumen(BaseModel):
-    """Secciones del resumen; se piden sin el campo 'resumen' para que el modelo las rellene."""
+    """Secciones del resumen sin el texto principal."""
     objetivos: list[str] = Field(default_factory=list, description="Objetivos o metas del estudio.")
     metodologia: str = Field(default="", description="Metodologia, tecnicas o enfoque del estudio.")
     hallazgos: list[str] = Field(default_factory=list, description="Hallazgos o resultados principales.")
@@ -39,7 +39,7 @@ class SeccionesResumen(BaseModel):
 
 
 class Entidades(BaseModel):
-    """Metadatos bibliograficos del articulo."""
+    """Datos básicos del articulo."""
     titulo: str = ""
     autores: list[str] = Field(default_factory=list)
     anio: str = ""
@@ -50,7 +50,7 @@ class Entidades(BaseModel):
 
 
 class FichaComparativa(BaseModel):
-    """Ficha de un documento; con dos de estas armo la comparacion."""
+    """Resumen corto de un documento para comparaciones."""
     objetivo: str = ""
     metodo: str = ""
     datos: str = ""
@@ -58,7 +58,7 @@ class FichaComparativa(BaseModel):
 
 
 class Comparacion(BaseModel):
-    """Resultado de comparar dos documentos (lo que se muestra en la tabla)."""
+    """Resultado final de comparar dos documentos."""
     objetivo_a: str = ""
     objetivo_b: str = ""
     metodo_a: str = ""
@@ -70,7 +70,7 @@ class Comparacion(BaseModel):
     conclusion: str = ""
 
     def filas(self):
-        """Devuelve la comparacion como filas (aspecto, A, B) para mostrarla en tabla."""
+        """Devuelve la comparación en formato tabla."""
         return [
             ("Objetivo", self.objetivo_a, self.objetivo_b),
             ("Metodo", self.metodo_a, self.metodo_b),
@@ -83,6 +83,7 @@ class AgenteAcademico:
     """Agente que resume, compara y responde preguntas sobre documentos academicos."""
 
     def __init__(self, modelo=None):
+        # Cliente del modelo local (Ollama)
         self.llm = ChatOllama(
             model=modelo or config.MODELO_TEXTO,
             base_url=config.OLLAMA_BASE_URL,
@@ -99,18 +100,13 @@ class AgenteAcademico:
         return self.documento
 
     def _estructurar(self, prompt, esquema, **kwargs):
-        """Ejecuta un prompt y devuelve la respuesta en el esquema Pydantic indicado."""
+        """Ejecuta el prompt y fuerza salida en formato estructurado."""
         # with_structured_output obliga al modelo a rellenar el esquema y lo devuelve ya parseado
         chain = prompt | self.llm.with_structured_output(esquema)
         return chain.invoke(kwargs)
 
     def resumir(self, documento=None):
-        """Resumen estructurado del documento.
-
-        El resumen general y las secciones se piden por separado: si van en un mismo
-        esquema, el modelo pequeno tiende a escribirlo todo en el resumen y deja
-        vacias las demas secciones. Las secciones se reintentan si quedan huecos.
-        """
+        """Genera un resumen del documento con secciones separadas."""
         doc = documento if documento is not None else self.documento
         resumen = (prompts.PROMPT_RESUMEN | self.llm).invoke({"documento": doc}).content.strip()
         s = self._estructurar(prompts.PROMPT_SECCIONES, SeccionesResumen, documento=doc)
@@ -153,11 +149,7 @@ class AgenteAcademico:
         )
 
     def comparar(self, documento_a, documento_b):
-        """Compara dos documentos.
-
-        Se extrae una ficha de cada documento por separado (mas fiable con modelos
-        pequenos) y luego se ensambla la tabla y se redacta la conclusion.
-        """
+        """Compara dos documentos y genera una tabla con conclusión."""
         fa = self._ficha(documento_a)
         fb = self._ficha(documento_b)
         conclusion = (prompts.PROMPT_CONCLUSION | self.llm).invoke({
@@ -173,11 +165,7 @@ class AgenteAcademico:
         )
 
     def preguntar(self, pregunta, session_id="default"):
-        """Responde una pregunta sobre el documento manteniendo el contexto.
-
-        Guarda el historial de la sesion y lo pasa al prompt, de forma que las
-        preguntas de seguimiento resuelven referencias a turnos anteriores.
-        """
+        """Responde preguntas usando el documento y el historial de la conversación."""
         historial = self._historiales.setdefault(session_id, [])
         respuesta = (prompts.PROMPT_QA | self.llm).invoke({
             "pregunta": pregunta,
@@ -195,11 +183,7 @@ class AgenteAcademico:
 
 
 def construir_agente_con_tools(agente):
-    """Crea un agente de LangChain con herramientas que envuelven las funciones.
-
-    Muestra el uso de agents y tools: el modelo elige que herramienta llamar segun
-    lo que pida el usuario. El flujo principal sigue siendo el de AgenteAcademico.
-    """
+    """Herramientas que permiten al agente ejecutar acciones automáticamente."""
     from langchain.agents import AgentExecutor, create_tool_calling_agent
     from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
     from langchain_core.tools import tool

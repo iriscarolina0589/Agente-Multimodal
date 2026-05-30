@@ -1,10 +1,6 @@
 """Interfaz por linea de comandos del agente.
 
-Ejemplos (desde la raiz del proyecto):
-    python src/cli.py resumir   ruta/a/articulo.pdf
-    python src/cli.py metadatos ruta/a/articulo.pdf
-    python src/cli.py comparar  articulo1.pdf articulo2.pdf
-    python src/cli.py chat      ruta/a/articulo.pdf
+Permite usar el sistema sin interfaz web.
 """
 
 import argparse
@@ -14,7 +10,7 @@ from agent import AgenteAcademico
 
 
 def resumir(agente, ruta):
-    """Carga el documento y muestra su resumen por consola."""
+    """Ejecuta el resumen del documento y lo muestra por consola."""
     agente.cargar(ruta)
     r = agente.resumir()
     print("\nRESUMEN\n" + r.resumen)
@@ -25,14 +21,14 @@ def resumir(agente, ruta):
 
 
 def metadatos(agente, ruta):
-    """Carga el documento y muestra sus metadatos."""
+    """Extrae y muestra los metadatos del documento."""
     agente.cargar(ruta)
     print("\nMETADATOS")
     print(agente.extraer_entidades().model_dump_json(indent=2))
 
 
 def comparar(agente, ruta_a, ruta_b):
-    """Compara dos documentos y muestra la tabla resultante."""
+    """Compara dos documentos y muestra resultados por pantalla."""
     comp = agente.comparar(ingest.cargar_documento(ruta_a), ingest.cargar_documento(ruta_b))
     print("\nCOMPARACION")
     for aspecto, doc_a, doc_b in comp.filas():
@@ -41,7 +37,7 @@ def comparar(agente, ruta_a, ruta_b):
 
 
 def chat(agente, ruta):
-    """Modo conversacional: voy preguntando sobre el mismo documento."""
+    """Modo conversacional sobre un documento cargado."""
     agente.cargar(ruta)
     print(f"\nDocumento cargado: {ruta}. Escribe 'salir' para terminar.\n")
     while True:
@@ -60,7 +56,7 @@ def main():
     cmp.add_argument("archivo_a")
     cmp.add_argument("archivo_b")
     sub.add_parser("chat").add_argument("archivo")
-
+    # routing de comandos
     args = parser.parse_args()
     agente = AgenteAcademico()
     if args.comando == "resumir":
