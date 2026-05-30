@@ -55,7 +55,7 @@ agente: AgenteAcademico = st.session_state.agente
 
 
 def guardar_temporal(archivo):
-    """Guarda el archivo subido temporalmente y devuelve la ruta.""""
+    """Guarda el archivo subido temporalmente y devuelve la ruta."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(archivo.name).suffix) as tmp:
         tmp.write(archivo.getbuffer())
         return tmp.name
